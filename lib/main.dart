@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/quick_split.dart';
+import 'pages/detailed_page.dart';
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
@@ -14,7 +15,6 @@ class MyApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF8B00D0),
           foregroundColor: Colors.white,
-          centerTitle: true,
         ),
       ),
       home: const SplitBillScreen(),
@@ -85,7 +85,14 @@ class SplitBillScreen extends StatelessWidget {
                   iconBg: Colors.green.withValues(alpha: 0.1),
                   title: 'Detailed Split',
                   subtitle: 'Assign specific items to each person',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DetailedSplitPage(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

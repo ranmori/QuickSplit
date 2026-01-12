@@ -130,9 +130,9 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF8B00D0).withOpacity(0.1),
+        color: const Color(0xFF8B00D0).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF8B00D0).withOpacity(0.2)),
+        border: Border.all(color: const Color(0xFF8B00D0).withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
