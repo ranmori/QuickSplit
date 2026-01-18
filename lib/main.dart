@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'pages/quick_split.dart';
 import 'pages/detailed_page.dart';
+import 'pages/history.dart';
+import '../models/split_record.dart';
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
@@ -22,8 +24,36 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class SplitBillScreen extends StatelessWidget {
+class SplitBillScreen extends StatefulWidget {
   const SplitBillScreen({super.key});
+
+  @override
+  State<SplitBillScreen> createState() => _SplitBillScreenState();
+}
+
+class _SplitBillScreenState extends State<SplitBillScreen> {
+
+ final List<SplitRecord> _historyList = [
+  SplitRecord(title: 'Detailed Split',
+   totalAmount: '\$39.10', 
+   dateTime: '31m ago',
+    peopleCount: 2,
+     perPersonAmount: '\$19.55',
+     ),
+    SplitRecord(
+      title: 'Detailed Split',
+      totalAmount: '\$14.95',
+      dateTime: '7h ago',
+      peopleCount: 2,
+      perPersonAmount: '\$7.47 each',
+    ),
+
+ ];
+ void _addNewRecord(SplitRecord record) {
+    setState(() {
+      _historyList.add(record);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +96,7 @@ class SplitBillScreen extends StatelessWidget {
                 _buildMenuCard(
                   icon: Icons.calculate_outlined,
                   iconColor: const Color.fromARGB(255, 148, 59, 183),
-                  iconBg: Colors.blue.withValues(alpha: 0.1),
+                  iconBg: const Color.fromARGB(255, 52, 92, 125).withValues(alpha: 0.1),
                   title: 'Quick Split',
                   subtitle: 'Divide total equally among everyone',
                   onTap: () {
@@ -89,7 +119,7 @@ class SplitBillScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const DetailedSplitPage(),
+                        builder: (context) => DetailedSplitPage(onRecordAdded: _addNewRecord),
                       ),
                     );
                   },
@@ -115,9 +145,16 @@ class SplitBillScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HistoryScreen(history: _historyList),
+                    ),
+                  );
+                },
                 icon: const Icon(Icons.history),
-                label: const Text('View History', style: TextStyle(fontSize: 16)),
+                label: Text('View History (${_historyList.length})', style: TextStyle(fontSize: 16)),
               ),
             ),
           ),
