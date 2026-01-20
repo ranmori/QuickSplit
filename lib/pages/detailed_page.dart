@@ -7,10 +7,9 @@ import '../widgets/item_tile.dart';
 import '../widgets/custom_text_field.dart';
 import 'split_summary.dart';
 
-
 class DetailedSplitPage extends StatefulWidget {
-    final Function(SplitRecord record) onRecordAdded;
-    const DetailedSplitPage({super.key, required this.onRecordAdded});
+  final Function(SplitRecord record) onRecordAdded;
+  const DetailedSplitPage({super.key, required this.onRecordAdded});
 
   @override
   State<DetailedSplitPage> createState() => _DetailedSplitPageState();
@@ -22,7 +21,7 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
     TextEditingController(text: 'Person 1'),
     TextEditingController(text: 'Person 2'),
   ];
-  
+
   final List<Map<String, dynamic>> _addedItems = [];
   final TextEditingController _taxController = TextEditingController(text: "0.0");
   final TextEditingController _tipController = TextEditingController(text: "15.0");
@@ -43,7 +42,6 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
       });
     }
   }
-
 
   void _showAddItemDialog() {
     final nameController = TextEditingController();
@@ -80,27 +78,23 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
                     const SizedBox(height: 16),
                     _buildLabel("Assign to"),
                     const SizedBox(height: 8),
-                    // Dynamic selectable list
                     SizedBox(
                       height: 150,
                       child: ListView(
                         shrinkWrap: true,
-                        children: _peopleControllers.map((person) {
-                          bool isSelected = localSelectedPerson == person.text;
-                          return InkWell(
-                            onTap: () => setDialogState(() => localSelectedPerson = person.text),
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: isSelected ? const Color(0xFF00AB47) : Colors.grey.shade300),
-                                color: isSelected ? const Color(0xFF00AB47).withValues(alpha: .05) : Colors.white,
-                              ),
-                              child: Text(person.text),
-                            ),
-                          );
-                        }).toList(),
+                        children: [
+                          // "Everyone" Option
+                          _buildAssignmentTile("Everyone", localSelectedPerson == null || localSelectedPerson == "Everyone", () {
+                            setDialogState(() => localSelectedPerson = "Everyone");
+                          }),
+                          // Individual People
+                          ..._peopleControllers.map((person) {
+                            bool isSelected = localSelectedPerson == person.text;
+                            return _buildAssignmentTile(person.text, isSelected, () {
+                              setDialogState(() => localSelectedPerson = person.text);
+                            });
+                          }),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -147,6 +141,7 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
         title: const Text('Detailed Split', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF8B00D0),
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
@@ -163,9 +158,9 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
                       )),
                   const SizedBox(height: 24),
                   SectionHeader(title: "Items", onAdd: _showAddItemDialog),
-                  if (_addedItems.isEmpty) 
-                    _buildEmptyStatePlaceholder("No items added yet") 
-                  else 
+                  if (_addedItems.isEmpty)
+                    _buildEmptyStatePlaceholder("No items added yet")
+                  else
                     ..._addedItems.map((item) => ItemTile(item: item)),
                   const SizedBox(height: 24),
                   _buildLabel("Tax (\$)"),
@@ -174,7 +169,10 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [ _buildLabel("Tip"), _buildTipToggle() ],
+                    children: [
+                      _buildLabel("Tip"),
+                      _buildTipToggle(),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   CustomTextField(controller: _tipController, hintText: "15.0", keyboardType: TextInputType.number),
@@ -188,81 +186,7 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
               width: double.infinity,
               height: 60,
               child: ElevatedButton(
-                onPressed: (){
-                  if(_addedItems.isEmpty) return;
-
-
-                  // calcaulate the subtotal
-
-                 double subtotal = 0;
-  for (var item in _addedItems) {
-                    subtotal +=
-                        double.tryParse(item['price'].toString()) ?? 0.0;
-                  }
-
-                  // 2. Calculate Tax and Tip
-                  double tax = double.tryParse(_taxController.text) ?? 0.0;
-                  double tipInput = double.tryParse(_tipController.text) ?? 0.0;
-                  // Assuming _isTipPercentage is a boolean you have for the toggle
-                  double tip = _isTipPercentage
-                      ? (subtotal * (tipInput / 100))
-                      : tipInput;
-                  double total = subtotal + tax + tip;
-
-                  // 3. Advanced Split Logic (Calculating per person)
-                  Map<String, double> individualTotals = {};
-
-                  // Initialize every person with $0
-                  for (var controller in _peopleControllers) {
-                    individualTotals[controller.text] = 0.0;
-                  }
-
-                  for (var item in _addedItems) {
-                    double itemPrice =
-                        double.tryParse(item['price'].toString()) ?? 0.0;
-                    String assigned = item['assigned'];
-
-                    if (assigned == "Everyone") {
-                      // Split the item price equally among all people
-                      double splitShare = itemPrice / _peopleControllers.length;
-                      individualTotals.updateAll(
-                        (name, currentVal) => currentVal + splitShare,
-                      );
-                    } else {
-                      // Add the full item price to the specific person
-                      individualTotals[assigned] =
-                          (individualTotals[assigned] ?? 0.0) + itemPrice;
-                    }
-                  }
-
-                  // 4. Distribute Tax and Tip proportionally based on subtotal share
-                  if (subtotal > 0) {
-                    double extraCharges = tax + tip;
-                    individualTotals.updateAll((name, personalSubtotal) {
-                      double proportion = personalSubtotal / subtotal;
-                      return personalSubtotal + (extraCharges * proportion);
-                    });
-                  }
-
-                  // 5. Create the Summary Data Object
-                  final summary = SplitSummaryData(
-                    subtotal: subtotal,
-                    tax: tax,
-                    tip: tip,
-                    total: total,
-                    items: _addedItems,
-                    individualTotals: individualTotals,
-                    dateString: "Jan 18, 2026, 8:08 PM", people: [],
-                  );
-
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SplitSummaryScreen(data: summary),
-                    ),
-                  );
-                },
+                onPressed: _calculateAndNavigate,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _addedItems.isEmpty ? const Color(0xFFD9DEE3) : const Color(0xFF00AB47),
                   foregroundColor: Colors.white,
@@ -274,6 +198,107 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // --- LOGIC ---
+
+  void _calculateAndNavigate() {
+    if (_addedItems.isEmpty) return;
+
+    // 1. Calculate subtotal
+    double subtotal = 0;
+    for (var item in _addedItems) {
+      subtotal += double.tryParse(item['price'].toString()) ?? 0.0;
+    }
+
+    // 2. Calculate Tax and Tip
+    double tax = double.tryParse(_taxController.text) ?? 0.0;
+    double tipInput = double.tryParse(_tipController.text) ?? 0.0;
+    double tip = _isTipPercentage ? (subtotal * (tipInput / 100)) : tipInput;
+    double total = subtotal + tax + tip;
+
+    // 3. Initialize individual totals
+    Map<String, double> individualTotals = {};
+    for (var controller in _peopleControllers) {
+      individualTotals[controller.text] = 0.0;
+    }
+
+    // 4. Split items
+    for (var item in _addedItems) {
+      double itemPrice = double.tryParse(item['price'].toString()) ?? 0.0;
+      String assigned = item['assigned'];
+
+      if (assigned == "Everyone") {
+        double splitShare = itemPrice / _peopleControllers.length;
+        individualTotals.updateAll((name, currentVal) => currentVal + splitShare);
+      } else {
+        individualTotals[assigned] = (individualTotals[assigned] ?? 0.0) + itemPrice;
+      }
+    }
+
+    // 5. Add Tax/Tip proportionally
+    if (subtotal > 0) {
+      double extraCharges = tax + tip;
+      individualTotals.updateAll((name, personalSubtotal) {
+        double proportion = personalSubtotal / subtotal;
+        return personalSubtotal + (extraCharges * proportion);
+      });
+    }
+
+    // 6. Create History Record
+    final newRecord = SplitRecord(
+      id: DateTime.now().toString(),
+      title: _addedItems.isNotEmpty ? _addedItems.first['name'] : 'Split',
+      totalAmount: '\$${total.toStringAsFixed(2)}',
+      dateTime: DateTime.now().toIso8601String(), // store date as String to match model
+      items: List<Map<String, dynamic>>.from(_addedItems),
+      peopleCount: _peopleControllers.length, 
+      perPersonAmount: '\$${(total / _peopleControllers.length).toStringAsFixed(2)}',
+      subtotal: subtotal,
+      tax: tax,
+      tip: tip,
+
+      individualTotals: individualTotals
+    );
+
+    // Call callback to update history page
+    widget.onRecordAdded(newRecord);
+
+    // 7. Create Summary Data
+    final summary = SplitSummaryData(
+      subtotal: subtotal,
+      tax: tax,
+      tip: tip,
+      total: total,
+      items: _addedItems,
+      individualTotals: individualTotals,
+      dateString: "${DateTime.now().day}/${DateTime.now().month} ${DateTime.now().hour}:${DateTime.now().minute}",
+       people: [],
+    );
+
+    // 8. Navigate
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SplitSummaryScreen(data: summary)),
+    );
+  }
+
+  // --- HELPERS ---
+
+  Widget _buildAssignmentTile(String text, bool isSelected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isSelected ? const Color(0xFF00AB47) : Colors.grey.shade300),
+          color: isSelected ? const Color(0xFF00AB47).withValues(alpha: 0.05) : Colors.white,
+        ),
+        child: Text(text),
       ),
     );
   }
@@ -314,8 +339,8 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
       ),
     );
   }
-}
-Widget _buildEmptyStatePlaceholder(String text) {
+
+  Widget _buildEmptyStatePlaceholder(String text) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40),
@@ -324,10 +349,8 @@ Widget _buildEmptyStatePlaceholder(String text) {
         border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
       ),
       child: Center(
-        child: Text(
-          text,
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
-        ),
+        child: Text(text, style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
       ),
     );
   }
+}

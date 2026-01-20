@@ -1,27 +1,9 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const QuickSplitApp());
-}
-
-class QuickSplitApp extends StatelessWidget {
-  const QuickSplitApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF8B00D0),
-      ),
-      home: const QuickSplitPage(),
-    );
-  }
-}
+import 'package:flutter_application_1/models/split_record.dart';
 
 class QuickSplitPage extends StatefulWidget {
-  const QuickSplitPage({super.key});
+  final Function(SplitRecord record) onRecordAdded;
+  const QuickSplitPage({super.key, required this.onRecordAdded});
 
   @override
   State<QuickSplitPage> createState() => _QuickSplitPageState();
@@ -43,11 +25,34 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
     if (people < 1) people = 1;
 
     double totalTip = bill * _tipPercentage;
-    setState(() {
-      _splitAmount = (bill + tax + totalTip) / people;
-    });
-  }
+    double totalWithExtras = bill + tax + totalTip;
+    double perPerson = totalWithExtras / people;
 
+    setState(() {
+      _splitAmount = perPerson;
+    });
+
+    // --- ADD TO HISTORY LOGIC ---
+    final newRecord = SplitRecord(
+      id: DateTime.now().toString(),
+      title: "Quick Split",
+      totalAmount: "\$${totalWithExtras.toStringAsFixed(2)}",
+      dateTime: "Just now",
+      peopleCount: people,
+      perPersonAmount: "\$${perPerson.toStringAsFixed(2)}",
+      items: [
+        {"name": "Base Bill", "price": bill.toString()},
+        {"name": "Tax", "price": tax.toString()},
+        {"name": "Tip", "price": totalTip.toStringAsFixed(2)},
+      ],
+      tax: tax,
+      tip: totalTip,
+      subtotal: bill,
+    );
+
+    widget.onRecordAdded(newRecord);
+ 
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(

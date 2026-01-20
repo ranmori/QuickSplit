@@ -1,23 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/summary_data.dart';
-import '../models/split_record.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SplitSummaryScreen extends StatelessWidget {
   final SplitSummaryData data;
 
   const SplitSummaryScreen({super.key, required this.data});
 
+
+  void _shareSummary() {
+    StringBuffer summaryBuffer = StringBuffer();
+    summaryBuffer.writeln('Split Summary');
+    summaryBuffer.writeln('Date: ${data.dateString}');
+    summaryBuffer.writeln('Total: \$${data.total.toStringAsFixed(2)}');
+    summaryBuffer.writeln('\nPer Person:');
+    data.individualTotals.forEach((name, amount) {
+      summaryBuffer.writeln('- $name: \$${amount.toStringAsFixed(2)}');
+    });
+    summaryBuffer.writeln('\nItems:');
+    for (var item in data.items) {
+      summaryBuffer.writeln('- ${item['name']}: \$${item['price']} (Assigned to: ${item['assigned']})');
+    }
+
+    Share.share(summaryBuffer.toString(), subject: 'Split Summary');
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           // --- HEADER SECTION ---
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF00C853), Color(0xFF00E676)],
+                colors: [Color(0xFF8B00D0), Color(0xFF4A00B5)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -119,7 +138,7 @@ class SplitSummaryScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Logic to share the breakdown as text could go here
+                  _shareSummary();
                 },
                 icon: const Icon(Icons.share, color: Colors.white),
                 label: const Text(
@@ -131,7 +150,7 @@ class SplitSummaryScreen extends StatelessWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00C853),
+                  backgroundColor: const Color(0xFF8B00D0),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -209,7 +228,7 @@ class SplitSummaryScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -228,6 +247,12 @@ class SplitSummaryScreen extends StatelessWidget {
               color: Colors.black87,
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.grey, size: 20),
+            onPressed: () {
+              Share.share('$name owes \$${amount.toStringAsFixed(2)}', subject: 'Your Split Amount');
+            },
+          ),
         ],
       ),
     );
@@ -241,7 +266,7 @@ class SplitSummaryScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'pages/quick_split.dart';
 import 'pages/detailed_page.dart';
 import 'pages/history.dart';
-import '../models/split_record.dart';
+import 'models/split_record.dart';
+
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This sets the theme for the entire app
+        useMaterial3: true,
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF8B00D0),
           foregroundColor: Colors.white,
@@ -32,26 +33,27 @@ class SplitBillScreen extends StatefulWidget {
 }
 
 class _SplitBillScreenState extends State<SplitBillScreen> {
-
- final List<SplitRecord> _historyList = [
-  SplitRecord(title: 'Detailed Split',
-   totalAmount: '\$39.10', 
-   dateTime: '31m ago',
-    peopleCount: 2,
-     perPersonAmount: '\$19.55',
-     ),
+  final List<SplitRecord> _historyList = [
     SplitRecord(
+      id: '0',
       title: 'Detailed Split',
-      totalAmount: '\$14.95',
-      dateTime: '7h ago',
+      totalAmount: '\$39.10',
+      dateTime: '31m ago',
       peopleCount: 2,
-      perPersonAmount: '\$7.47 each',
+      perPersonAmount: '\$19.55',
+      items: [
+        {'name': 'Pizza', 'price': '30.00', 'assigned': 'Alex, Sam'},
+        {'name': 'Drinks', 'price': '9.10', 'assigned': 'Sam'},
+      ],
+      subtotal: 30.00,
+      tax: 2.10,
+      tip: 7.00,
     ),
+  ];
 
- ];
- void _addNewRecord(SplitRecord record) {
+  void _deleteRecord(String id) {
     setState(() {
-      _historyList.add(record);
+      _historyList.removeWhere((record) => record.id == id);
     });
   }
 
@@ -61,13 +63,13 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // 1. PURPLE HEADER
+          // 1. MODERN PURPLE HEADER
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+            padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
             decoration: const BoxDecoration(
-              color: Color(0xFF8B00D0), // Vibrant Purple
-             
+              color: Color(0xFF8B00D0),
+              
             ),
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,50 +78,62 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   'QuickSplit',
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold),
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5),
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Split the bill in under 30 seconds',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(
+                    color: Colors.white70, 
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),
           ),
 
-          // 2. MENU CARDS
+          // 2. MENU CARDS (Styled to match your "Design" image)
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               children: [
                 _buildMenuCard(
-                  icon: Icons.calculate_outlined,
-                  iconColor: const Color.fromARGB(255, 148, 59, 183),
-                  iconBg: const Color.fromARGB(255, 52, 92, 125).withValues(alpha: 0.1),
+                 icon: Icons.calculate_outlined,
+                  iconColor: const Color(0xFF8B00D0),
+                  iconBg: const Color(0xFFF3E5F5), // Soft purple bg
                   title: 'Quick Split',
                   subtitle: 'Divide total equally among everyone',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const QuickSplitPage(),
+                        builder: (context) => QuickSplitPage(
+                          onRecordAdded: (newRecord) {
+                            setState(() => _historyList.insert(0, newRecord));
+                          },
+                        ),
                       ),
                     );
                   },
                 ),
                 const SizedBox(height: 16),
                 _buildMenuCard(
-                  icon: Icons.receipt_long_outlined,
-                  iconColor: Colors.green,
-                  iconBg: Colors.green.withValues(alpha: 0.1),
+                  icon: Icons.receipt_long_outlined, // Modern outlined icon
+                  iconColor: const Color(0xFF10B981), // Emerald Green
+                  iconBg: const Color(0xFFECFDF5), // Soft emerald bg
                   title: 'Detailed Split',
                   subtitle: 'Assign specific items to each person',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DetailedSplitPage(onRecordAdded: _addNewRecord),
+                        builder: (context) => DetailedSplitPage(
+                          onRecordAdded: (newRecord) {
+                            setState(() => _historyList.insert(0, newRecord));
+                          },
+                        ),
                       ),
                     );
                   },
@@ -135,12 +149,13 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             padding: const EdgeInsets.all(24.0),
             child: SizedBox(
               width: double.infinity,
-              height: 60,
+              height: 56,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF2F4F7), // Light grey
-                  foregroundColor: const Color(0xFF344054), // Darker text
+                  backgroundColor: const Color(0xFFF8FAFC),
+                  foregroundColor: const Color(0xFF475569),
                   elevation: 0,
+                  side: BorderSide(color: Colors.grey.shade200),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -149,16 +164,20 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => HistoryScreen(history: _historyList),
+                      builder: (context) => HistoryScreen(
+                        history: _historyList, 
+                        onDelete: _deleteRecord,
+                      ),
                     ),
                   );
                 },
-                icon: const Icon(Icons.history),
-                label: Text('View History (${_historyList.length})', style: TextStyle(fontSize: 16)),
+                icon: const Icon(Icons.history_rounded, size: 20),
+                label: Text('View History (${_historyList.length})', 
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
           ),
-          const SizedBox(height: 10), // Extra space at bottom
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -175,29 +194,31 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
+                // THE "DESIGNED" ICON CONTAINER
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: iconBg,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16), // The Squircle
                   ),
                   child: Icon(icon, color: iconColor, size: 28),
                 ),
@@ -209,16 +230,20 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       Text(
                         title,
                         style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 18, 
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                       ),
                     ],
                   ),
                 ),
+                Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
               ],
             ),
           ),
