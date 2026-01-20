@@ -19,20 +19,39 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  // Logic to delete and refresh UI instantly
   void _handleDelete(String id) {
     setState(() {
-      // This tells THIS specific screen to rebuild immediately
       widget.onDelete(id); 
     });
     
-    // Optional: Show a quick confirmation toast
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Record deleted"),
         duration: Duration(seconds: 1),
       ),
     );
+  }
+
+  String _formatDateTime(String? dateTime) {
+    if (dateTime == null) return "Just now";
+    
+    try {
+      final DateTime parsedDate = DateTime.parse(dateTime);
+      final DateTime now = DateTime.now();
+      final Duration diff = now.difference(parsedDate);
+
+      if (diff.inMinutes < 60) {
+        return "${diff.inMinutes}m ago";
+      } else if (diff.inHours < 24) {
+        return "${diff.inHours}h ago";
+      } else if (diff.inDays < 7) {
+        return "${diff.inDays}d ago";
+      } else {
+        return "${parsedDate.day}/${parsedDate.month}/${parsedDate.year}";
+      }
+    } catch (e) {
+      return dateTime; // Return as-is if not ISO format
+    }
   }
 
   @override
@@ -67,62 +86,46 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   child: HistoryCard(
                     title: item.title,
                     amount: item.totalAmount,
-                    timeAgo: item.dateTime ?? "Just now",
+                    timeAgo: _formatDateTime(item.dateTime),
                     people: '${item.peopleCount} people',
                     perPerson: item.perPersonAmount,
                     onTap: () {
-                      // Navigate to summary logic here
-                   // 1. Clean the Items list to ensure no internal field is null
                       final List<Map<String, dynamic>> safeItems = item.items
                           .map((i) {
                             return {
                               'name': i['name']?.toString() ?? "Item",
                               'price': i['price']?.toString() ?? "0.00",
-                              'assigned':
-                                  i['assigned']?.toString() ?? "Everyone",
+                              'assigned': i['assigned']?.toString() ?? "Everyone",
                             };
                           })
                           .toList();
 
-                      // 2. Build the summary data with total safety
                       final summaryData = SplitSummaryData(
-                        total:
-                            double.tryParse(
-                              item.totalAmount.replaceAll(
-                                RegExp(r'[^\d.]'),
-                                '',
-                              ),
-                            ) ??
-                            0.0,
+                        total: double.tryParse(
+                              item.totalAmount.replaceAll(RegExp(r'[^\d.]'), ''),
+                            ) ?? 0.0,
                         subtotal: item.subtotal,
                         tax: item.tax,
                         tip: item.tip,
-                        items: safeItems, // Using our cleaned list
+                        items: safeItems,
                         people: [],
-                        dateString: item.dateTime ?? "No Date",
-                        individualTotals:
-                            item.individualTotals ??
+                        dateString: _formatDateTime(item.dateTime),
+                        individualTotals: item.individualTotals ?? 
                             {
-                              "Per Person":
-                                  double.tryParse(
-                                    item.perPersonAmount.replaceAll(
-                                      RegExp(r'[^\d.]'),
-                                      '',
-                                    ),
-                                  ) ??
-                                  0.0,
+                              "Per Person": double.tryParse(
+                                item.perPersonAmount.replaceAll(RegExp(r'[^\d.]'), ''),
+                              ) ?? 0.0,
                             },
                       );
 
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              SplitSummaryScreen(data: summaryData),
+                          builder: (context) => SplitSummaryScreen(data: summaryData),
                         ),
                       );
                     },
-                    onDelete: () => _handleDelete(item.id), // Call local handler
+                    onDelete: () => _handleDelete(item.id),
                   ),
                 );
               },

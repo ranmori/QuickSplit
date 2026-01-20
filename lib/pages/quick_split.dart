@@ -32,27 +32,33 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
       _splitAmount = perPerson;
     });
 
-    // --- ADD TO HISTORY LOGIC ---
+    // Create individualTotals map for quick split (all equal)
+    Map<String, double> individualTotals = {};
+    for (int i = 1; i <= people; i++) {
+      individualTotals['Person $i'] = perPerson;
+    }
+
     final newRecord = SplitRecord(
       id: DateTime.now().toString(),
       title: "Quick Split",
       totalAmount: "\$${totalWithExtras.toStringAsFixed(2)}",
-      dateTime: "Just now",
+      dateTime: DateTime.now().toIso8601String(), // Use ISO format for consistency
       peopleCount: people,
       perPersonAmount: "\$${perPerson.toStringAsFixed(2)}",
       items: [
-        {"name": "Base Bill", "price": bill.toString()},
-        {"name": "Tax", "price": tax.toString()},
+        {"name": "Base Bill", "price": bill.toStringAsFixed(2)},
+        {"name": "Tax", "price": tax.toStringAsFixed(2)},
         {"name": "Tip", "price": totalTip.toStringAsFixed(2)},
       ],
       tax: tax,
       tip: totalTip,
       subtotal: bill,
+      individualTotals: individualTotals, // Add the missing field
     );
 
     widget.onRecordAdded(newRecord);
- 
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,11 +74,9 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Result Card
             _buildResultCard(),
             const SizedBox(height: 24),
             
-            // Input Form Card
             Card(
               elevation: 0,
               color: Colors.white,
