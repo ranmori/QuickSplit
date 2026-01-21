@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF8B00D0),
+          backgroundColor: Color.fromRGBO(37, 83, 139, 1),
           foregroundColor: Colors.white,
         ),
       ),
@@ -213,6 +213,14 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
+            spreadRadius: 0,
+          ),
+        
+         BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
           ),
         ],
       ),
