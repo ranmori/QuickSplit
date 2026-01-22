@@ -28,6 +28,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       const SnackBar(
         content: Text("Record deleted"),
         duration: Duration(seconds: 1),
+        
       ),
     );
   }
@@ -59,10 +60,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.black87,
+        backgroundColor: const Color(0xFF8B00D0), // Match the main purple
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF8B00D0), Color(0xFF7A00B8)],
+            ),
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -81,14 +95,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
               itemCount: widget.history.length,
               itemBuilder: (context, index) {
                 final item = widget.history[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: HistoryCard(
-                    title: item.title,
-                    amount: item.totalAmount,
-                    timeAgo: _formatDateTime(item.dateTime),
-                    people: '${item.peopleCount} people',
-                    perPerson: item.perPersonAmount,
+                return Dismissible(
+                  key: Key(item.id),
+                  direction: DismissDirection.endToStart, // swipe from left to right
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20.0),
+                    decoration: BoxDecoration(
+                     color: const Color(0xFFEF5350), // Red
+                       borderRadius: BorderRadius.circular(16),
+                      ),
+                    child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 28,),
+                    ),
+                    // confirmation logic
+                    onDismissed: (direction) {
+                      _handleDelete(item.id);
+                    },
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: HistoryCard(
+                      title: item.title,
+                      amount: item.totalAmount,
+                      timeAgo: _formatDateTime(item.dateTime),
+                      people: '${item.peopleCount} people',
+                      perPerson: item.perPersonAmount,
                     onTap: () {
                       final List<Map<String, dynamic>> safeItems = item.items
                           .map((i) {
@@ -127,15 +157,73 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     },
                     onDelete: () => _handleDelete(item.id),
                   ),
+                )
                 );
               },
             ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return const Center(
-      child: Text("No history yet", style: TextStyle(color: Colors.grey)),
-    );
-  }
+ Widget _buildEmptyState() {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 1. A soft, stylized icon
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9), // Very light slate
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.receipt_long_outlined,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // 2. Clear, friendly text
+          const Text(
+            "No Records Found",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Your split history will appear here once you finish a calculation.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey.shade500,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // 3. A "Go Back" button to get them moving
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B00D0),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text("Start Splitting"),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 }

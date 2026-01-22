@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+// haptic feedback
+import 'package:flutter/services.dart';
+
 import 'package:firebase_core/firebase_core.dart'; // Import this
 import 'firebase_options.dart'; //
 
@@ -79,46 +82,70 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
-            decoration: const BoxDecoration(
-              color: Color(0xFF8B00D0),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'QuickSplit',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Split the bill in under 30 seconds',
-                  style: TextStyle(
-                    color: Colors.white70, 
-                    fontSize: 16,
+                Container(
+  width: double.infinity,
+  padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
+  decoration: const BoxDecoration(
+    // Use a Gradient instead of a solid color
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF8B00D0), // Your original Purple
+        Color(0xFF6A00A3), // A slightly deeper purple
+      ],
+    ),
+  ),
+  child: Stack( // We use a Stack to add a background "glow"
+    children: [
+      // OPTIONAL: Subtle Background "Orb" for that Design look
+      Positioned(
+        right: -50,
+        top: -50,
+        child: Container(
+          width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: .1),
+                    ),
                   ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'QuickSplit',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Split the bill in under 30 seconds',
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               children: [
-                _buildMenuCard(
+                 _buildMenuCard(
                  icon: Icons.calculate_outlined,
                   iconColor: const Color(0xFF8B00D0),
                   iconBg: const Color(0xFFF3E5F5),
                   title: 'Quick Split',
                   subtitle: 'Divide total equally among everyone',
                   onTap: () {
+                     HapticFeedback.lightImpact();
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -167,7 +194,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   backgroundColor: const Color(0xFFF8FAFC),
                   foregroundColor: const Color(0xFF475569),
                   elevation: 0,
-                  side: BorderSide(color: Colors.grey.shade200),
+                  side: BorderSide(color: Colors.grey.shade200,width: 1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -210,14 +237,14 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
         border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: .03),
             blurRadius: 20,
             offset: const Offset(0, 10),
             spreadRadius: 0,
           ),
         
          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: .04),
             blurRadius: 10,
             offset: const Offset(0, 2),
             spreadRadius: 0,
