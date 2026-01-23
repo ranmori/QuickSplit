@@ -7,7 +7,6 @@ class SplitSummaryScreen extends StatelessWidget {
 
   const SplitSummaryScreen({super.key, required this.data});
 
-
   void _shareSummary() {
     StringBuffer summaryBuffer = StringBuffer();
     summaryBuffer.writeln('Split Summary');
@@ -19,131 +18,162 @@ class SplitSummaryScreen extends StatelessWidget {
     });
     summaryBuffer.writeln('\nItems:');
     for (var item in data.items) {
-      summaryBuffer.writeln('- ${item['name']}: \$${item['price']} (Assigned to: ${item['assigned']})');
+      summaryBuffer.writeln(
+          '- ${item['name']}: \$${item['price']} (Assigned to: ${item['assigned']})');
     }
 
     Share.share(summaryBuffer.toString(), subject: 'Split Summary');
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      
       body: Column(
         children: [
-          // --- HEADER SECTION ---
+          // --- TECH HEADER WITH IMAGE ---
           Container(
+            width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF8B00D0), Color(0xFF4A00B5)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                colors: [Color(0xFF8B00D0), Color(0xFF6A00A3)],
               ),
             ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: 0.3,
+                    child: Image.asset(
+                      'assets/images/unnamed.png',
+                      fit: BoxFit.cover,
                     ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+                    child: Row(
                       children: [
-                        const Text(
-                          'Split Summary',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white, size: 20),
+                          onPressed: () => Navigator.pop(context),
                         ),
-                        Text(
-                          data.dateString,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
+                        const SizedBox(width: 4),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Split Summary',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              data.dateString,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
 
           // --- SCROLLABLE CONTENT ---
           Expanded(
             child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Grand Total Card
-                    _buildGrandTotalCard(),
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Grand Total Card (Dark Tech Theme)
+                  _buildGrandTotalCard(),
 
-                    const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
-                    // Per Person Section
-                    const Text(
-                      'Per Person',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                  // Per Person Section
+                  const Row(
+                    children: [
+                      Icon(Icons.people_outline, size: 20, color: Color(0xFF8B00D0)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Individual Totals',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    ...data.individualTotals.entries.map((entry) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildPersonCard(entry.key, entry.value),
-                        )),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ...data.individualTotals.entries.map((entry) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildPersonCard(entry.key, entry.value),
+                      )),
 
-                    const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
-                    // Items Section
-                    const Text(
-                      'Items',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                  // Items Section
+                  const Row(
+                    children: [
+                      Icon(Icons.list_alt_rounded, size: 20, color: Color(0xFF8B00D0)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Item Breakdown',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    ...data.items.map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildItemCard(
-                            item['name'],
-                            item['price'].toString(),
-                            item['assigned'],
-                          ),
-                        )),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ...data.items.map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildItemCard(
+                          item['name'],
+                          item['price'].toString(),
+                          item['assigned'],
+                        ),
+                      )),
+                ],
               ),
             ),
           ),
 
-          // --- BOTTOM SHARE BUTTON ---
+          // --- BOTTOM SHARE ACTION ---
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
             child: SizedBox(
               width: double.infinity,
+              height: 55,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  _shareSummary();
-                },
-                icon: const Icon(Icons.share, color: Colors.white),
+                onPressed: _shareSummary,
+                icon: const Icon(Icons.share_rounded, color: Colors.white, size: 20),
                 label: const Text(
-                  'Share Split',
+                  'Share Full Summary',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -152,9 +182,8 @@ class SplitSummaryScreen extends StatelessWidget {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8B00D0),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                   elevation: 0,
                 ),
@@ -172,34 +201,61 @@ class SplitSummaryScreen extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF1E293B), // Slate dark
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF8B00D0).withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Grand Total',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+            'GRAND TOTAL',
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '\$${data.total.toStringAsFixed(2)}',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
+              fontSize: 42,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 20),
-          const Divider(color: Colors.white24),
-          const SizedBox(height: 12),
-          _buildDetailRow('Subtotal', '\$${data.subtotal.toStringAsFixed(2)}'),
-          const SizedBox(height: 8),
-          _buildDetailRow('Tax', '\$${data.tax.toStringAsFixed(2)}'),
-          const SizedBox(height: 8),
-          _buildDetailRow('Tip', '\$${data.tip.toStringAsFixed(2)}'),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                _buildDetailRow('Subtotal', '\$${data.subtotal.toStringAsFixed(2)}'),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Divider(color: Colors.white10, height: 1),
+                ),
+                _buildDetailRow('Tax', '\$${data.tax.toStringAsFixed(2)}'),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Divider(color: Colors.white10, height: 1),
+                ),
+                _buildDetailRow('Tip', '\$${data.tip.toStringAsFixed(2)}'),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -215,7 +271,7 @@ class SplitSummaryScreen extends StatelessWidget {
           style: const TextStyle(
             color: Colors.white,
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],
@@ -224,34 +280,49 @@ class SplitSummaryScreen extends StatelessWidget {
 
   Widget _buildPersonCard(String name, double amount) {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(name, style: const TextStyle(fontSize: 15, color: Colors.black87)),
+          CircleAvatar(
+            backgroundColor: const Color(0xFF8B00D0).withOpacity(0.1),
+            child: Text(
+              name[0].toUpperCase(),
+              style: const TextStyle(color: Color(0xFF8B00D0), fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+            ),
+          ),
           Text(
             '\$${amount.toStringAsFixed(2)}',
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF8B00D0),
             ),
           ),
+          const SizedBox(width: 8),
           IconButton(
-            icon: const Icon(Icons.share, color: Colors.grey, size: 20),
+            icon: const Icon(Icons.share_rounded, color: Colors.grey, size: 20),
             onPressed: () {
-              Share.share('$name owes \$${amount.toStringAsFixed(2)}', subject: 'Your Split Amount');
+              Share.share('$name owes \$${amount.toStringAsFixed(2)}',
+                  subject: 'Your Split Amount');
             },
           ),
         ],
@@ -262,46 +333,43 @@ class SplitSummaryScreen extends StatelessWidget {
   Widget _buildItemCard(String name, String price, String assignedTo) {
     double itemPrice = double.tryParse(price) ?? 0.0;
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(name, style: const TextStyle(fontSize: 15, color: Colors.black87)),
+              Text(name,
+                  style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B))),
               Text(
                 '\$${itemPrice.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              assignedTo,
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
-            ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.assignment_ind_outlined, size: 14, color: Colors.grey),
+              const SizedBox(width: 4),
+              Text(
+                assignedTo,
+                style: const TextStyle(fontSize: 13, color: Colors.grey),
+              ),
+            ],
           ),
         ],
       ),

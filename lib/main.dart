@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-
-// haptic feedback
 import 'package:flutter/services.dart';
-
-import 'package:firebase_core/firebase_core.dart'; // Import this
-import 'firebase_options.dart'; //
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 import 'pages/onboarding_page.dart';
 import 'pages/quick_split.dart';
@@ -34,7 +31,6 @@ class MyApp extends StatelessWidget {
           foregroundColor: Colors.white,
         ),
       ),
-      // Start with onboarding page
       home: const OnboardingPage(),
     );
   }
@@ -82,70 +78,88 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-                Container(
-  width: double.infinity,
-  padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
-  decoration: const BoxDecoration(
-    // Use a Gradient instead of a solid color
-    gradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Color(0xFF8B00D0), // Your original Purple
-        Color(0xFF6A00A3), // A slightly deeper purple
-      ],
-    ),
-  ),
-  child: Stack( // We use a Stack to add a background "glow"
-    children: [
-      // OPTIONAL: Subtle Background "Orb" for that Design look
-      Positioned(
-        right: -50,
-        top: -50,
-        child: Container(
-          width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: .1),
+          // --- UPDATED HEADER SECTION ---
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF8B00D0),
+                  Color(0xFF6A00A3),
+                ],
+              ),
+            ),
+            child: Stack(
+              children: [
+                // 1. Background Image - Positioned to ignore padding
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: 0.35, // Adjust opacity to blend with purple
+                    child: Image.asset(
+                      'assets/images/unnamed.png',
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'QuickSplit',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
+                
+                // 2. Gradient Overlay for readability
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: .2),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Split the bill in under 30 seconds',
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
-                    ),
-                  ],
+                  ),
+                ),
+
+                // 3. Text Content - Padding applied here so image stays edge-to-edge
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'QuickSplit',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Split the bill in under 30 seconds',
+                        style: TextStyle(color: Colors.white70, fontSize: 16),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
+
+          // --- MENU CARDS SECTION ---
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               children: [
-                 _buildMenuCard(
-                 icon: Icons.calculate_outlined,
+                _buildMenuCard(
+                  icon: Icons.calculate_outlined,
                   iconColor: const Color(0xFF8B00D0),
                   iconBg: const Color(0xFFF3E5F5),
                   title: 'Quick Split',
                   subtitle: 'Divide total equally among everyone',
                   onTap: () {
-                     HapticFeedback.lightImpact();
-
+                    HapticFeedback.lightImpact();
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -166,6 +180,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   title: 'Detailed Split',
                   subtitle: 'Assign specific items to each person',
                   onTap: () {
+                    HapticFeedback.lightImpact();
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -184,6 +199,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
 
           const Spacer(),
 
+          // --- FOOTER SECTION ---
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: SizedBox(
@@ -194,7 +210,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   backgroundColor: const Color(0xFFF8FAFC),
                   foregroundColor: const Color(0xFF475569),
                   elevation: 0,
-                  side: BorderSide(color: Colors.grey.shade200,width: 1),
+                  side: BorderSide(color: Colors.grey.shade200, width: 1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -204,15 +220,17 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => HistoryScreen(
-                        history: _historyList, 
+                        history: _historyList,
                         onDelete: _deleteRecord,
                       ),
                     ),
                   );
                 },
                 icon: const Icon(Icons.history_rounded, size: 20),
-                label: Text('View History (${_historyList.length})', 
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                label: Text(
+                  'View History (${_historyList.length})',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ),
@@ -240,14 +258,11 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             color: Colors.black.withValues(alpha: .03),
             blurRadius: 20,
             offset: const Offset(0, 10),
-            spreadRadius: 0,
           ),
-        
-         BoxShadow(
+          BoxShadow(
             color: Colors.black.withValues(alpha: .04),
             blurRadius: 10,
             offset: const Offset(0, 2),
-            spreadRadius: 0,
           ),
         ],
       ),
@@ -276,7 +291,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       Text(
                         title,
                         style: const TextStyle(
-                          fontSize: 18, 
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1E293B),
                         ),
