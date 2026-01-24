@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_application_1/models/split_record.dart';
+import 'package:flutter_application_1/widgets/rolling_number.dart';
 
 class QuickSplitPage extends StatefulWidget {
   final Function(SplitRecord record) onRecordAdded;
@@ -28,6 +30,9 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
     double totalWithExtras = bill + tax + totalTip;
     double perPerson = totalWithExtras / people;
 
+    if (perPerson != _splitAmount) {
+      HapticFeedback.lightImpact();
+    }
     setState(() {
       _splitAmount = perPerson;
     });
@@ -60,11 +65,13 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // --- TECH HEADER WITH IMAGE ---
+          // --- HEADER SECTION ---
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -76,10 +83,12 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
               children: [
                 Positioned.fill(
                   child: Opacity(
-                    opacity: 0.3,
+                    opacity: isDark ? 0.15 : 0.3,
                     child: Image.asset(
                       'assets/images/unnamed.png',
                       fit: BoxFit.cover,
+                      color: isDark ? Colors.black : null,
+                      colorBlendMode: BlendMode.darken,
                     ),
                   ),
                 ),
@@ -94,11 +103,7 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
                         ),
                         const Text(
                           'Quick Split',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -114,13 +119,13 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  _buildResultCard(),
+                  _buildResultCard(isDark),
                   const SizedBox(height: 24),
                   Card(
                     elevation: 0,
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     shape: RoundedRectangleBorder(
-                      side: BorderSide(color: Colors.grey.shade200),
+                      side: BorderSide(color: Theme.of(context).dividerColor),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Padding(
@@ -132,23 +137,26 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
                             label: "Total Bill",
                             prefixIcon: Icons.attach_money,
                             controller: _amountController,
+                            isDark: isDark,
                           ),
                           const SizedBox(height: 20),
                           _buildInputField(
                             label: "Number of People",
                             prefixIcon: Icons.person_outline,
                             controller: _peopleController,
+                            isDark: isDark,
                           ),
                           const SizedBox(height: 20),
                           _buildInputField(
                             label: "Tax",
                             prefixIcon: Icons.receipt_long,
                             controller: _taxController,
+                            isDark: isDark,
                           ),
                           const SizedBox(height: 24),
                           const Text("Tip Percentage", style: TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 12),
-                          _buildTipSegmentedButton(),
+                          _buildTipSegmentedButton(isDark),
                         ],
                       ),
                     ),
@@ -176,12 +184,12 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
     );
   }
 
-  Widget _buildResultCard() {
+  Widget _buildResultCard(bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF8B00D0).withOpacity(0.1),
+        color: const Color(0xFF8B00D0).withOpacity(isDark ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFF8B00D0).withOpacity(0.2)),
       ),
@@ -189,24 +197,30 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
         children: [
           Text("EACH PERSON PAYS",
               style: TextStyle(
-                  color: Colors.purple[900],
+                  color: isDark ? Colors.purple[200] : Colors.purple[900],
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
                   fontSize: 12)),
           const SizedBox(height: 8),
-          Text(
-            "\$${_splitAmount.toStringAsFixed(2)}",
-            style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF8B00D0)),
+          RollingAmount(
+            value: _splitAmount,
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.w900,
+              color: isDark ? const Color(0xFFB04DFF) : const Color(0xFF8B00D0),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInputField({required String label, required IconData prefixIcon, required TextEditingController controller}) {
+  Widget _buildInputField({
+    required String label, 
+    required IconData prefixIcon, 
+    required TextEditingController controller,
+    required bool isDark,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -214,11 +228,12 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: TextStyle(color: isDark ? Colors.white : Colors.black),
           decoration: InputDecoration(
-            prefixIcon: Icon(prefixIcon, size: 20),
+            prefixIcon: Icon(prefixIcon, size: 20, color: isDark ? Colors.purple[200] : Colors.grey[600]),
             filled: true,
-            fillColor: Colors.grey[100],
+            fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -229,9 +244,10 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
     );
   }
 
-  Widget _buildTipSegmentedButton() {
-    return LayoutBuilder(builder: (context, constraints) {
-      return SegmentedButton<double>(
+  Widget _buildTipSegmentedButton(bool isDark) {
+    return SizedBox(
+      width: double.infinity,
+      child: SegmentedButton<double>(
         segments: const [
           ButtonSegment(value: 0.10, label: Text("10%")),
           ButtonSegment(value: 0.15, label: Text("15%")),
@@ -246,10 +262,12 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
         },
         showSelectedIcon: false,
         style: SegmentedButton.styleFrom(
+          backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
           selectedBackgroundColor: const Color(0xFF8B00D0),
           selectedForegroundColor: Colors.white,
+          side: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade300),
         ),
-      );
-    });
+      ),
+    );
   }
 }

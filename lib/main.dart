@@ -24,13 +24,45 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'QuickSplit Tech',
+      // --- LIGHT THEME ---
       theme: ThemeData(
-        useMaterial3: true,
+        brightness: Brightness.light,
+        primaryColor: const Color(0xFF8B00D0),
+        scaffoldBackgroundColor: Colors.white,
+        cardColor: Colors.white,
+        dividerColor: Colors.grey.shade200,
+        textTheme: const TextTheme(
+          titleLarge: TextStyle(color: Color(0xFF1E293B)),
+          bodyMedium: TextStyle(color: Color(0xFF475569)),
+        ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color.fromRGBO(37, 83, 139, 1),
+          backgroundColor: Color(0xFF8B00D0),
           foregroundColor: Colors.white,
         ),
       ),
+      // --- DARK THEME ---
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xFF8B00D0),
+        scaffoldBackgroundColor: const Color(0xFF0F0F1A), // Deep Midnight
+        cardColor: const Color(0xFF1E1E2E), // Lighter card depth
+        dividerColor: Colors.white10,
+        textTheme: const TextTheme(
+          titleLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white70),
+        ),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF8B00D0),
+          secondary: Color(0xFF00AB47),
+          surface: Color(0xFF1E1E2E),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF0F0F1A),
+          foregroundColor: Colors.white,
+        ),
+      ),
+      themeMode: ThemeMode.system, // Auto-switches based on phone settings
       home: const OnboardingPage(),
     );
   }
@@ -59,10 +91,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
       subtotal: 30.00,
       tax: 2.10,
       tip: 7.00,
-      individualTotals: {
-        'Alex': 15.00,
-        'Sam': 24.10,
-      },
+      individualTotals: {'Alex': 15.00, 'Sam': 24.10},
     ),
   ];
 
@@ -74,53 +103,35 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // --- UPDATED HEADER SECTION ---
+          // --- ADAPTIVE HEADER ---
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF8B00D0),
-                  Color(0xFF6A00A3),
-                ],
+                colors: [Color(0xFF8B00D0), Color(0xFF6A00A3)],
               ),
             ),
             child: Stack(
               children: [
-                // 1. Background Image - Positioned to ignore padding
                 Positioned.fill(
                   child: Opacity(
-                    opacity: 0.35, // Adjust opacity to blend with purple
+                    opacity: isDark ? 0.15 : 0.35, // Dimmer in Dark Mode
                     child: Image.asset(
                       'assets/images/unnamed.png',
                       fit: BoxFit.cover,
+                      color: isDark ? Colors.black : null,
+                      colorBlendMode: BlendMode.darken,
                     ),
                   ),
                 ),
-                
-                // 2. Gradient Overlay for readability
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: .2),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // 3. Text Content - Padding applied here so image stays edge-to-edge
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
                   child: Column(
@@ -153,9 +164,10 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             child: Column(
               children: [
                 _buildMenuCard(
+                  context,
                   icon: Icons.calculate_outlined,
                   iconColor: const Color(0xFF8B00D0),
-                  iconBg: const Color(0xFFF3E5F5),
+                  iconBg: isDark ? const Color(0xFF2D1B4D) : const Color(0xFFF3E5F5),
                   title: 'Quick Split',
                   subtitle: 'Divide total equally among everyone',
                   onTap: () {
@@ -164,9 +176,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => QuickSplitPage(
-                          onRecordAdded: (newRecord) {
-                            setState(() => _historyList.insert(0, newRecord));
-                          },
+                          onRecordAdded: (newRecord) => setState(() => _historyList.insert(0, newRecord)),
                         ),
                       ),
                     );
@@ -174,9 +184,10 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                 ),
                 const SizedBox(height: 16),
                 _buildMenuCard(
+                  context,
                   icon: Icons.receipt_long_outlined,
                   iconColor: const Color(0xFF10B981),
-                  iconBg: const Color(0xFFECFDF5),
+                  iconBg: isDark ? const Color(0xFF063321) : const Color(0xFFECFDF5),
                   title: 'Detailed Split',
                   subtitle: 'Assign specific items to each person',
                   onTap: () {
@@ -185,9 +196,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => DetailedSplitPage(
-                          onRecordAdded: (newRecord) {
-                            setState(() => _historyList.insert(0, newRecord));
-                          },
+                          onRecordAdded: (newRecord) => setState(() => _historyList.insert(0, newRecord)),
                         ),
                       ),
                     );
@@ -199,7 +208,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
 
           const Spacer(),
 
-          // --- FOOTER SECTION ---
+          // --- ADAPTIVE FOOTER ---
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: SizedBox(
@@ -207,13 +216,11 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
               height: 56,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF8FAFC),
-                  foregroundColor: const Color(0xFF475569),
+                  backgroundColor: isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF8FAFC),
+                  foregroundColor: isDark ? Colors.white70 : const Color(0xFF475569),
                   elevation: 0,
-                  side: BorderSide(color: Colors.grey.shade200, width: 1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                  side: BorderSide(color: Theme.of(context).dividerColor),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -240,7 +247,8 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
     );
   }
 
-  Widget _buildMenuCard({
+  Widget _buildMenuCard(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required Color iconBg,
@@ -250,19 +258,14 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: .03),
+            color: Colors.black.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.2 : 0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -290,16 +293,21 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).brightness == Brightness.dark 
+                              ? Colors.white54 
+                              : Colors.grey.shade500,
+                        ),
                       ),
                     ],
                   ),

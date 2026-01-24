@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/summary_data.dart';
+import 'package:flutter_application_1/widgets/rolling_number.dart';
 import 'package:share_plus/share_plus.dart';
 
 class SplitSummaryScreen extends StatelessWidget {
@@ -27,11 +28,13 @@ class SplitSummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // --- TECH HEADER WITH IMAGE ---
+          // --- TECH HEADER ---
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -43,7 +46,7 @@ class SplitSummaryScreen extends StatelessWidget {
               children: [
                 Positioned.fill(
                   child: Opacity(
-                    opacity: 0.3,
+                    opacity: isDark ? 0.15 : 0.3,
                     child: Image.asset(
                       'assets/images/unnamed.png',
                       fit: BoxFit.cover,
@@ -96,22 +99,21 @@ class SplitSummaryScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Grand Total Card (Dark Tech Theme)
-                  _buildGrandTotalCard(),
+                  _buildGrandTotalCard(isDark),
 
                   const SizedBox(height: 32),
 
                   // Per Person Section
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.people_outline, size: 20, color: Color(0xFF8B00D0)),
-                      SizedBox(width: 8),
+                      const Icon(Icons.people_outline, size: 20, color: Color(0xFF8B00D0)),
+                      const SizedBox(width: 8),
                       Text(
                         'Individual Totals',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
+                          color: isDark ? Colors.white : const Color(0xFF1E293B),
                         ),
                       ),
                     ],
@@ -119,22 +121,22 @@ class SplitSummaryScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   ...data.individualTotals.entries.map((entry) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildPersonCard(entry.key, entry.value),
+                        child: _buildPersonCard(entry.key, entry.value, isDark),
                       )),
 
                   const SizedBox(height: 32),
 
                   // Items Section
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.list_alt_rounded, size: 20, color: Color(0xFF8B00D0)),
-                      SizedBox(width: 8),
+                      const Icon(Icons.list_alt_rounded, size: 20, color: Color(0xFF8B00D0)),
+                      const SizedBox(width: 8),
                       Text(
                         'Item Breakdown',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
+                          color: isDark ? Colors.white : const Color(0xFF1E293B),
                         ),
                       ),
                     ],
@@ -146,6 +148,7 @@ class SplitSummaryScreen extends StatelessWidget {
                           item['name'],
                           item['price'].toString(),
                           item['assigned'],
+                          isDark,
                         ),
                       )),
                 ],
@@ -157,10 +160,10 @@ class SplitSummaryScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),
@@ -197,15 +200,15 @@ class SplitSummaryScreen extends StatelessWidget {
 
   // --- UI COMPONENTS ---
 
-  Widget _buildGrandTotalCard() {
+  Widget _buildGrandTotalCard(bool isDark) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B), // Slate dark
+        color: isDark ? const Color(0xFF2D2D3F) : const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8B00D0).withOpacity(0.2),
+            color: const Color(0xFF8B00D0).withOpacity(isDark ? 0.4 : 0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -225,8 +228,8 @@ class SplitSummaryScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            '\$${data.total.toStringAsFixed(2)}',
+          RollingAmount(
+            value: data.total,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 42,
@@ -278,16 +281,16 @@ class SplitSummaryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPersonCard(String name, double amount) {
+  Widget _buildPersonCard(String name, double amount, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF2D2D3F) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -306,7 +309,11 @@ class SplitSummaryScreen extends StatelessWidget {
           Expanded(
             child: Text(
               name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
+              ),
             ),
           ),
           Text(
@@ -319,7 +326,10 @@ class SplitSummaryScreen extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           IconButton(
-            icon: const Icon(Icons.share_rounded, color: Colors.grey, size: 20),
+            icon: Icon(Icons.share_rounded, 
+              color: isDark ? Colors.white38 : Colors.grey, 
+              size: 20
+            ),
             onPressed: () {
               Share.share('$name owes \$${amount.toStringAsFixed(2)}',
                   subject: 'Your Split Amount');
@@ -330,14 +340,14 @@ class SplitSummaryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildItemCard(String name, String price, String assignedTo) {
+  Widget _buildItemCard(String name, String price, String assignedTo, bool isDark) {
     double itemPrice = double.tryParse(price) ?? 0.0;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: isDark ? Colors.white.withOpacity(0.03) : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,16 +356,16 @@ class SplitSummaryScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(name,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B))),
+                      color: isDark ? Colors.white : const Color(0xFF1E293B))),
               Text(
                 '\$${itemPrice.toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: isDark ? Colors.white70 : Colors.black87,
                 ),
               ),
             ],
@@ -363,11 +373,17 @@ class SplitSummaryScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.assignment_ind_outlined, size: 14, color: Colors.grey),
+              Icon(Icons.assignment_ind_outlined, 
+                size: 14, 
+                color: isDark ? Colors.white38 : Colors.grey
+              ),
               const SizedBox(width: 4),
               Text(
                 assignedTo,
-                style: const TextStyle(fontSize: 13, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 13, 
+                  color: isDark ? Colors.white38 : Colors.grey
+                ),
               ),
             ],
           ),
