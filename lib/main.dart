@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 
 import 'pages/onboarding_page.dart';
@@ -45,8 +47,8 @@ class MyApp extends StatelessWidget {
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: const Color(0xFF8B00D0),
-        scaffoldBackgroundColor: const Color(0xFF0F0F1A), // Deep Midnight
-        cardColor: const Color(0xFF1E1E2E), // Lighter card depth
+        scaffoldBackgroundColor: const Color(0xFF0F0F1A), 
+        cardColor: const Color(0xFF1E1E2E), 
         dividerColor: Colors.white10,
         textTheme: const TextTheme(
           titleLarge: TextStyle(color: Colors.white),
@@ -62,8 +64,17 @@ class MyApp extends StatelessWidget {
           foregroundColor: Colors.white,
         ),
       ),
-      themeMode: ThemeMode.system, // Auto-switches based on phone settings
-      home: const OnboardingPage(),
+      themeMode: ThemeMode.system, 
+      // StreamBuilder here checks if user is logged in automatically
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return const SplitBillScreen();
+          }
+          return const OnboardingPage();
+        },
+      ),
     );
   }
 }
@@ -76,40 +87,44 @@ class SplitBillScreen extends StatefulWidget {
 }
 
 class _SplitBillScreenState extends State<SplitBillScreen> {
-  final List<SplitRecord> _historyList = [
-    SplitRecord(
-      id: '0',
-      title: 'Detailed Split',
-      totalAmount: '\$39.10',
-      dateTime: DateTime.now().subtract(const Duration(minutes: 31)).toIso8601String(),
-      peopleCount: 2,
-      perPersonAmount: '\$19.55',
-      items: [
-        {'name': 'Pizza', 'price': '30.00', 'assigned': 'Alex, Sam'},
-        {'name': 'Drinks', 'price': '9.10', 'assigned': 'Sam'},
-      ],
-      subtotal: 30.00,
-      tax: 2.10,
-      tip: 7.00,
-      individualTotals: {'Alex': 15.00, 'Sam': 24.10},
-    ),
-  ];
+  // Local list remains for immediate UI feedback, 
+  // but we will eventually fetch this from Firestore
+  final List<SplitRecord> _historyList = [];
 
   void _deleteRecord(String id) {
     setState(() {
       _historyList.removeWhere((record) => record.id == id);
     });
+    // Optional: Add Firestore delete logic here later
   }
-
+  
+Future<void> _saveRecordToFirestore(SplitRecord record) async {
+  final user = FirebaseAuth.instance.currentUser;
+  
+  if (user != null) {
+    try {
+      // Accessing Firestore to save the record
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('history')
+          .add(record.toMap()); // Make sure your model has toMap()
+          
+    } catch (e) {
+      print("Error saving: $e");
+    }
+  }
+}
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // --- ADAPTIVE HEADER ---
+          // --- ADAPTIVE HEADER WITH ICONS ---
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -123,7 +138,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
               children: [
                 Positioned.fill(
                   child: Opacity(
-                    opacity: isDark ? 0.15 : 0.35, // Dimmer in Dark Mode
+                    opacity: isDark ? 0.15 : 0.35,
                     child: Image.asset(
                       'assets/images/unnamed.png',
                       fit: BoxFit.cover,
@@ -133,21 +148,44 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
+                  padding: const EdgeInsets.fromLTRB(24, 60, 12, 30),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'QuickSplit',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
-                        ),
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'QuickSplit',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          // HEADER ICONS
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.person_outline, color: Colors.white),
+                                onPressed: () {
+                                  // Profile logic
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                                onPressed: () async {
+                                  await FirebaseAuth.instance.signOut();
+                                  // The StreamBuilder in MyApp handles the navigation back to Onboarding
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 8),
-                      Text(
+                      const SizedBox(height: 4),
+                      const Text(
                         'Split the bill in under 30 seconds',
                         style: TextStyle(color: Colors.white70, fontSize: 16),
                       ),
@@ -176,7 +214,10 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => QuickSplitPage(
-                          onRecordAdded: (newRecord) => setState(() => _historyList.insert(0, newRecord)),
+                          onRecordAdded: (newRecord) {
+                            setState(() => _historyList.insert(0, newRecord));
+                            _saveRecordToFirestore(newRecord);
+                          },
                         ),
                       ),
                     );
@@ -196,7 +237,9 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => DetailedSplitPage(
-                          onRecordAdded: (newRecord) => setState(() => _historyList.insert(0, newRecord)),
+                          onRecordAdded: (newRecord) {
+                            setState(() => _historyList.insert(0, newRecord));
+                          },
                         ),
                       ),
                     );
