@@ -7,11 +7,9 @@ class SplitRecord {
   final int peopleCount;
   final String perPersonAmount;
   final double subtotal;
-  final double tax; 
+  final double tax;
   final double tip;
-  // This is the missing piece for dynamic names!
-  final Map<String, double>? individualTotals; 
-  
+  final Map<String, double>? individualTotals;
 
   SplitRecord({
     required this.id,
@@ -24,8 +22,10 @@ class SplitRecord {
     this.subtotal = 0.0,
     this.tax = 0.0,
     this.tip = 0.0,
-    this.individualTotals, // Add this to constructor
+    this.individualTotals,
   });
+
+  // --- 1. TO MAP (Saves to Firestore) ---
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -38,7 +38,28 @@ class SplitRecord {
       'subtotal': subtotal,
       'tax': tax,
       'tip': tip,
-      'individualTotals': individualTotals, // Include in map
+      'individualTotals': individualTotals,
     };
+  }
+
+  // --- 2. FROM MAP (Reads from Firestore) ---
+  factory SplitRecord.fromMap(Map<String, dynamic> map, String docId) {
+    return SplitRecord(
+      id: docId, // Use the Firestore document ID
+      title: map['title'] ?? '',
+      totalAmount: map['totalAmount'] ?? '',
+      dateTime: map['dateTime'],
+      // Firestore returns Lists as List<dynamic>, so we cast it back safely
+      items: List<Map<String, dynamic>>.from(map['items'] ?? []),
+      peopleCount: map['peopleCount'] ?? 0,
+      perPersonAmount: map['perPersonAmount'] ?? '',
+      subtotal: (map['subtotal'] ?? 0.0).toDouble(),
+      tax: (map['tax'] ?? 0.0).toDouble(),
+      tip: (map['tip'] ?? 0.0).toDouble(),
+      // Converting the map back to double values safely
+      individualTotals: map['individualTotals'] != null 
+          ? Map<String, double>.from(map['individualTotals'].map((k, v) => MapEntry(k, v.toDouble())))
+          : null,
+    );
   }
 }

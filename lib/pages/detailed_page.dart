@@ -35,8 +35,7 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
   final TextEditingController _tipController = TextEditingController(text: "15.0");
   
   bool _isTipPercentage = true;
-  final int _historyKey = 0;
-
+  int _historyKey = 0;
   // --- OCR SCANNING LOGIC ---
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -246,7 +245,28 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
                       );
                     },
                   ),
-                  SectionHeader(title: "People", onAdd: _addPerson),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SectionHeader(title: "Items", onAdd: _showAddItemDialog),
+                      if (_addedItems.isNotEmpty)
+                        TextButton.icon(
+                          onPressed: _showClearWarning,
+                          icon: const Icon(
+                            Icons.delete_sweep_outlined,
+                            size: 18,
+                            color: Colors.redAccent,
+                          ),
+                          label: const Text(
+                            "Clear All",
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                   ..._peopleControllers.asMap().entries.map((e) => PersonInput(
                         controller: e.value,
                         onDelete: () => _removePerson(e.key),
@@ -477,7 +497,8 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
 
   void _calculateAndNavigate() {
     // Logic remains identical to your original provided snippet...
-    double? tax = double.tryParse(_taxController.text);
+    double? tax = double.tryParse(_taxController.text); // Added ?? 0.0
+    double tipInput = double.tryParse(_tipController.text) ?? 0.0; // Added ?? 0.0
     if (tax == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid tax amount")));
       return;
@@ -491,13 +512,14 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
     }
     
     for (var controller in _peopleControllers) {
-      String name = controller.text.trim();
+      String name = controller.text.trim().isEmpty ? 'unnamed' : controller.text.trim();
+      
       if (name.isNotEmpty && !name.startsWith("Person ")) {
         _groupService.savePerson(name);
       }
     }
 
-    double tipInput = double.tryParse(_tipController.text) ?? 0.0;
+    
     double tip = _isTipPercentage ? (subtotal * (tipInput / 100)) : tipInput;
     double total = subtotal + tax + tip;
 
@@ -508,12 +530,13 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
 
     for (var item in _addedItems) {
       double itemPrice = double.tryParse(item['price'].toString()) ?? 0.0;
-      String assigned = item['assigned'];
+      String assigned = item['assigned'].toString().trim();
       if (assigned == "Everyone") {
-        double splitShare = itemPrice / _peopleControllers.length;
+        int peopleCount = _peopleControllers.isEmpty ? 1 : _peopleControllers.length;
+        double splitShare = itemPrice / peopleCount;
         individualTotals.updateAll((name, currentVal) => currentVal + splitShare);
       } else {
-        individualTotals[assigned] = (individualTotals[assigned] ?? 0.0) + itemPrice;
+        individualTotals[assigned] = (individualTotals[assigned] ?? 0.0) + itemPrice ;
       }
     }
 
@@ -561,4 +584,29 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
       ),
     );
   }
+  void _showClearWarning() {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Clear all items?"),
+      content: const Text("This will remove all items from the current bill."),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _addedItems.clear();
+            });
+            HapticFeedback.heavyImpact();
+            Navigator.pop(context);
+          },
+          child: const Text("Clear All", style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    ),
+  );
+}
 }

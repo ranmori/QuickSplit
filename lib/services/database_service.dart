@@ -26,12 +26,15 @@ class DatabaseService {
 
   // 3. This function "Listens" to the history and updates the UI automatically
   Stream<QuerySnapshot> getHistoryStream() {
-    String uid = _auth.currentUser?.uid ?? "";
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) {
+      // Return empty stream when not authenticated
+      return const Stream.empty();
+    }
     return _db
         .collection('users')
         .doc(uid)
         .collection('history')
         .orderBy('timestamp', descending: true)
         .snapshots();
-  }
-}
+  }}

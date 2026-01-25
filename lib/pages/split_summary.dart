@@ -19,8 +19,11 @@ class SplitSummaryScreen extends StatelessWidget {
     });
     summaryBuffer.writeln('\nItems:');
     for (var item in data.items) {
-      summaryBuffer.writeln(
-          '- ${item['name']}: \$${item['price']} (Assigned to: ${item['assigned']})');
+      // ✅ FIX: Added null checks for sharing
+      String itemName = item['name']?.toString() ?? 'Item';
+      String itemPrice = item['price']?.toString() ?? '0.00';
+      String assigned = item['assigned']?.toString() ?? 'Everyone';
+      summaryBuffer.writeln('- $itemName: \$$itemPrice (Assigned to: $assigned)');
     }
 
     Share.share(summaryBuffer.toString(), subject: 'Split Summary');
@@ -145,9 +148,10 @@ class SplitSummaryScreen extends StatelessWidget {
                   ...data.items.map((item) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _buildItemCard(
-                          item['name'],
-                          item['price'].toString(),
-                          item['assigned'],
+                          // ✅ FIX: Added null safety here
+                          item['name']?.toString() ?? 'Item',
+                          item['price']?.toString() ?? '0.00',
+                          item['assigned']?.toString() ?? 'Everyone',
                           isDark,
                         ),
                       )),
@@ -301,7 +305,7 @@ class SplitSummaryScreen extends StatelessWidget {
           CircleAvatar(
             backgroundColor: const Color(0xFF8B00D0).withOpacity(0.1),
             child: Text(
-              name[0].toUpperCase(),
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
               style: const TextStyle(color: Color(0xFF8B00D0), fontWeight: FontWeight.bold),
             ),
           ),

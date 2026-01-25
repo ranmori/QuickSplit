@@ -30,10 +30,9 @@ class _QuickSplitPageState extends State<QuickSplitPage> {
     double totalWithExtras = bill + tax + totalTip;
     double perPerson = totalWithExtras / people;
 
-    if (perPerson != _splitAmount) {
+    if ((perPerson - _splitAmount).abs() > 0.001) {
       HapticFeedback.lightImpact();
-    }
-    setState(() {
+    }    setState(() {
       _splitAmount = perPerson;
     });
 
