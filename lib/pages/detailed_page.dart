@@ -35,7 +35,7 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
   final TextEditingController _tipController = TextEditingController(text: "15.0");
   
   bool _isTipPercentage = true;
-  int _historyKey = 0;
+  final int _historyKey = 0;
   // --- OCR SCANNING LOGIC ---
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -46,26 +46,27 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
         builder: (context) => const Center(child: CircularProgressIndicator(color: Color(0xFF8B00D0))),
       );
       
-      final List<Map<String, dynamic>> items = await _ocrService.scanReceipt(File(image.path));
-      if (!mounted) return;
-      Navigator.pop(context);
+      try {
+        final List<Map<String, dynamic>> items = await _ocrService.scanReceipt(File(image.path));
+        if (!mounted) return;
+        Navigator.pop(context);
 
-      if (items.isNotEmpty) {
-        _showScanResults(items);
-      } else {
+        if (items.isNotEmpty) {
+          _showScanResults(items);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("No items found on receipt. Try a clearer photo.")),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No items found on receipt. Try a clearer photo.")),
+          const SnackBar(content: Text("Failed to scan receipt. Please try again.")),
         );
-      }
-    }
+      }    }
   }
-
-  void _addPerson() {
-    HapticFeedback.lightImpact();
-    setState(() {
-      _peopleControllers.add(TextEditingController(text: 'Person ${_peopleControllers.length + 1}'));
-    });
-  }
+  
 
   void _removePerson(int index) {
     if (_peopleControllers.length > 1) {
@@ -210,34 +211,71 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
           ),
 
           // --- MAIN CONTENT ---
-          Expanded(
-            child: SingleChildScrollView(
+     // --- MAIN CONTENT ---
+        Expanded(
+  child: SingleChildScrollView(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 1. QUICK ADD SECTION (Existing)
                   FutureBuilder<List<String>>(
                     key: ValueKey(_historyKey),
                     future: _groupService.getRecentPeople(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("QUICK ADD", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? Colors.white38 : Colors.grey)),
+                          Text(
+                            "QUICK ADD",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white38 : Colors.grey,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
-                              children: snapshot.data!.map((name) => Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: ActionChip(
-                                  backgroundColor: isDark ? const Color(0xFF2D2D3F) : Colors.grey[100],
-                                  avatar: CircleAvatar(backgroundColor: const Color(0xFF8B00D0), child: Text(name[0], style: const TextStyle(color: Colors.white, fontSize: 10))),
-                                  label: Text(name, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
-                                  onPressed: () => _handleAddPerson(name),
-                                ),
-                              )).toList(),
+                              children: snapshot.data!
+                                  .map(
+                                    (name) => Padding(
+                                      padding: const EdgeInsets.only(
+                                        right: 8.0,
+                                      ),
+                                      child: ActionChip(
+                                        backgroundColor: isDark
+                                            ? const Color(0xFF2D2D3F)
+                                            : Colors.grey[100],
+                                        avatar: CircleAvatar(
+                                          backgroundColor: const Color(
+                                            0xFF8B00D0,
+                                          ),
+                                          child: Text(
+                                            name[0],
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ),
+                                        label: Text(
+                                          name,
+                                          style: TextStyle(
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black87,
+                                          ),
+                                        ),
+                                        onPressed: () => _handleAddPerson(name),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -245,10 +283,42 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
                       );
                     },
                   ),
+
+                  // 2. PEOPLE SECTION (The "Add Person" button you were missing)
+                  SectionHeader(
+                    title: "People",
+                    onAdd: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _peopleControllers.add(
+                          TextEditingController(
+                            text: 'Person ${_peopleControllers.length + 1}',
+                          ),
+                        );
+                      });
+                    },
+                  ),
+                  ..._peopleControllers.asMap().entries.map(
+                    (e) => PersonInput(
+                      controller: e.value,
+                      onDelete: () => _removePerson(e.key),
+                    ),
+                  ),
+                  
+
+                  const SizedBox(height: 24),
+
+                  // 3. ITEMS SECTION
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SectionHeader(title: "Items", onAdd: _showAddItemDialog),
+                        SectionHeader(title: "Items",  onAdd: () {
+                        HapticFeedback.lightImpact();
+                        _showAddItemDialog();
+                      }),
+                      const Spacer(),
+                    
+                   
                       if (_addedItems.isNotEmpty)
                         TextButton.icon(
                           onPressed: _showClearWarning,
@@ -267,12 +337,7 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
                         ),
                     ],
                   ),
-                  ..._peopleControllers.asMap().entries.map((e) => PersonInput(
-                        controller: e.value,
-                        onDelete: () => _removePerson(e.key),
-                      )),
-                  const SizedBox(height: 24),
-                  SectionHeader(title: "Items", onAdd: _showAddItemDialog),
+                 const SizedBox(height: 12),
                   if (_addedItems.isEmpty)
                     _buildEmptyStatePlaceholder("No items added yet", isDark)
                   else
@@ -288,10 +353,17 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
                         child: ItemTile(item: item),
                       );
                     }),
+
                   const SizedBox(height: 24),
+
+                  // 4. TAX & TIP (Existing)
                   _buildLabel("Tax (\$)", isDark),
                   const SizedBox(height: 8),
-                  CustomTextField(controller: _taxController, hintText: "0.0", keyboardType: TextInputType.number),
+                  CustomTextField(
+                    controller: _taxController,
+                    hintText: "0.0",
+                    keyboardType: TextInputType.number,
+                  ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -301,12 +373,15 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  CustomTextField(controller: _tipController, hintText: "15.0", keyboardType: TextInputType.number),
+                  CustomTextField(
+                    controller: _tipController,
+                    hintText: "15.0",
+                    keyboardType: TextInputType.number,
+                  ),
                 ],
               ),
             ),
           ),
-          
           // --- FOOTER ---
           Padding(
             padding: const EdgeInsets.all(20.0),

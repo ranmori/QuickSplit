@@ -12,18 +12,28 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // We remove spaceBetween so they sit next to each other
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisSize: MainAxisSize.min, // Takes only as much space as needed
       children: [
         Text(
           title,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
+        
+        // --- THIS IS THE GAP YOU NEED ---
+        const SizedBox(width: 12), 
+        
         TextButton.icon(
           onPressed: onAdd,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           icon: const Icon(Icons.add, size: 18, color: Color(0xFF00AB47)),
           label: Text(
-            "Add ${title.substring(0, title.length)}",
+            "Add ${title.endsWith('s') ? title.substring(0, title.length - 1) : title}",
             style: const TextStyle(
               color: Color(0xFF00AB47),
               fontWeight: FontWeight.bold,

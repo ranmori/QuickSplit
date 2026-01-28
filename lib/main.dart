@@ -5,15 +5,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 
+// --- PAGE IMPORTS ---
 import 'pages/onboarding_page.dart';
 import 'pages/quick_split.dart';
 import 'pages/detailed_page.dart';
 import 'pages/history.dart';
-import 'pages/settings_page.dart'; // Ensure this exists
+import 'pages/settings_page.dart';
 import 'models/split_record.dart';
 
-// --- THEME MANAGER ---
-// This allows the theme to change across the entire app instantly
+// --- GLOBAL THEME MANAGER ---
+// This acts as a global "switch" that the whole app listens to.
 ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
 
 void main() async {
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // This builder listens to the themeNotifier and rebuilds the app when it changes
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (_, ThemeMode currentMode, __) {
@@ -36,6 +38,8 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'QuickSplit Tech',
           themeMode: currentMode,
+          
+          // --- LIGHT THEME DEFINITION ---
           theme: ThemeData(
             brightness: Brightness.light,
             primaryColor: const Color(0xFF8B00D0),
@@ -52,6 +56,8 @@ class MyApp extends StatelessWidget {
               elevation: 0,
             ),
           ),
+
+          // --- DARK THEME DEFINITION ---
           darkTheme: ThemeData(
             brightness: Brightness.dark,
             primaryColor: const Color(0xFF8B00D0),
@@ -73,12 +79,16 @@ class MyApp extends StatelessWidget {
               elevation: 0,
             ),
           ),
+
+          // --- AUTH NAVIGATION LOGIC ---
           home: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, snapshot) {
+              // If user is logged in, show the Dashboard
               if (snapshot.hasData) {
                 return const SplitBillScreen();
               }
+              // If not, show Onboarding (it will now follow the theme!)
               return const OnboardingPage();
             },
           ),
@@ -98,6 +108,7 @@ class SplitBillScreen extends StatefulWidget {
 class _SplitBillScreenState extends State<SplitBillScreen> {
   final List<SplitRecord> _historyList = [];
 
+  // Firestore Save Logic
   Future<void> _saveRecordToFirestore(SplitRecord record) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -143,8 +154,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final user = FirebaseAuth.instance.currentUser;
 
-    // --- DISPLAY NAME LOGIC ---
-    // Safely finds a name to show, or defaults to "User"
+    // --- NULL-SAFE DISPLAY NAME ---
     final String displayName = user?.displayName ?? 
                                user?.email?.split('@')[0] ?? 
                                "User";
@@ -153,7 +163,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // --- ADAPTIVE HEADER ---
+          // --- HEADER WITH GREETING ---
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -197,7 +207,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Split bills in seconds, not minutes.',
+                        'Split bills in seconds.',
                         style: TextStyle(color: Colors.white60, fontSize: 14),
                       ),
                     ],
@@ -207,7 +217,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             ),
           ),
 
-          // --- MENU CARDS ---
+          // --- MAIN BUTTON CARDS ---
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -218,7 +228,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   iconColor: const Color(0xFF8B00D0),
                   iconBg: isDark ? const Color(0xFF2D1B4D) : const Color(0xFFF3E5F5),
                   title: 'Quick Split',
-                  subtitle: 'Divide total equally among everyone',
+                  subtitle: 'Divide total equally',
                   onTap: () {
                     HapticFeedback.lightImpact();
                     Navigator.push(
@@ -241,7 +251,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   iconColor: const Color(0xFF10B981),
                   iconBg: isDark ? const Color(0xFF063321) : const Color(0xFFECFDF5),
                   title: 'Detailed Split',
-                  subtitle: 'Assign specific items to each person',
+                  subtitle: 'Assign specific items',
                   onTap: () {
                     HapticFeedback.lightImpact();
                     Navigator.push(
@@ -263,7 +273,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
 
           const Spacer(),
 
-          // --- BOTTOM ACTION BAR (Icons moved here for UX) ---
+          // --- ERGONOMIC BOTTOM BAR ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
             child: Row(
@@ -299,7 +309,8 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Profile/Settings
+                
+                // Settings/Profile Button
                 _buildBottomIconButton(
                   context,
                   icon: Icons.person_outline,
@@ -308,12 +319,13 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       context,
                       MaterialPageRoute(builder: (context) => const SettingsPage()),
                     );
-                    // Refresh home screen after returning from settings (updates name/theme)
+                    // Refresh when coming back from Settings to update Name/Theme
                     setState(() {});
                   },
                 ),
                 const SizedBox(width: 12),
-                // Logout
+                
+                // Logout Button
                 _buildBottomIconButton(
                   context,
                   icon: Icons.logout_rounded,
@@ -329,8 +341,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
     );
   }
 
-  // --- HELPER UI BUILDERS ---
-
+  // UI Helpers
   Widget _buildBottomIconButton(BuildContext context,
       {required IconData icon, required VoidCallback onPressed, Color? color}) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
