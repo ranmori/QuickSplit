@@ -145,10 +145,10 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                   ),
                 ),
                 onChanged: (value) => setState(() {
-                  _totalBill = double.tryParse(value) ?? 0.0;
+                  final parsed = double.tryParse(value) ?? 0.0;
+                  _totalBill = parsed < 0 ? 0.0 : parsed;
                 }),
-              ),
-              const SizedBox(height: 24),
+              ),              const SizedBox(height: 24),
 
               // --- TIP SELECTOR ---
               _buildLabel('Select Tip'),

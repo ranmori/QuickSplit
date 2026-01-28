@@ -560,9 +560,10 @@ class _DetailedSplitPageState extends State<DetailedSplitPage> {
     HapticFeedback.mediumImpact();
     setState(() {
       for (var item in items) {
+        String cleanPrice = item['price'].toString().replaceAll(RegExp(r'[^\d.]'), '');
         _addedItems.add({
           'name': item['name'],
-          'price': item['price'],
+          'price': cleanPrice,
           'assigned': 'Everyone',
         });
       }

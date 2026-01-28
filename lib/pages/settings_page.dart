@@ -67,8 +67,15 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     } catch (e) {
       debugPrint("Update Error: $e");
-    }
-  }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Failed to update profile. Please try again."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,12 +166,20 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           _buildSettingsTile(
             icon: Icons.info_outline,
-            title: "Version",
-            subtitle: "1.0.2 Build 42",
-          ),
-          
-          const SizedBox(height: 40),
-          
+          ElevatedButton.icon(
+            onPressed: () async {
+              try {
+                await FirebaseAuth.instance.signOut();
+                if (mounted) Navigator.pop(context);
+              } catch (e) {
+                debugPrint("Sign out error: $e");
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Failed to sign out. Please try again.")),
+                  );
+                }
+              }
+            },          
           // --- LOGOUT BUTTON ---
           ElevatedButton.icon(
             onPressed: () async {

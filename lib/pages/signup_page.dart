@@ -46,8 +46,7 @@ class _SignupPageState extends State<SignupPage> {
         password: _passwordController.text.trim(),
       );
       
-      await userCredential.user!.updateDisplayName(_nameController.text.trim());
-
+      await userCredential.user?.updateDisplayName(_nameController.text.trim());
       if (mounted) {
         _showSnackBar('Account created successfully!', Colors.green);
         Navigator.pushReplacement(
